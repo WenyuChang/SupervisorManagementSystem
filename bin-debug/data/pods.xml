@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<views>
+	<view
+		id="view0"
+		label="Manager Assistant">
+		<pod id="pod00" type="datagrid" title="Tasks List"/>
+		<pod id="pod01" type="chart2" title="Calender"/>
+		<pod id="pod01" type="chart1" title="The proportion of Completion Rates"/>
+		<pod id="pod01" type="chart3" title="The distribution of Completion Rates This Year"/>
+	</view>
+	
+	<view
+		id="view1"
+		label="Director">
+		<pod id="pod00" type="datagrid" title="Tasks List"/>
+<!--		<pod id="pod01" type="chart2" title="Calender"/>-->
+		<pod id="pod01" type="chart1" title="The proportion of Completion Rates"/>
+		<pod id="pod01" type="chart3" title="The distribution of Completion Rates This Year"/>
+	</view>
+	
+	<view
+		id="view2"
+		label="Department Manager">
+		<pod id="pod00" type="datagrid" title="Tasks List"/>
+<!--		<pod id="pod01" type="chart2" title="Calender"/>-->
+<!--		<pod id="pod01" type="chart1" title="The proportion of Completion Rates"/>-->
+<!--		<pod id="pod01" type="chart3" title="The distribution of Completion Rates This Year"/>-->
+	</view>
+</views>

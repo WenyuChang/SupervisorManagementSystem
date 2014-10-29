@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Displays a ColumnChart and LineChart using a ViewStack.
+ The ColumnChart and LineChart allow a user to drill-down
+ one level. For the demo, random data is generated.
+ The ColumnChart and LineChart use the same dataProvider.
+-->
+<PodContentBase
+	xmlns="com.common.dashboard.view.*"
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="100%" height="100%">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			[Bindable]
+			private var currLineData:ArrayCollection;
+			
+			override public function clearData():void
+			{
+				currLineData.removeAll();
+			}
+			
+			override public function set arrData(arr:ArrayCollection):void
+			{
+				currLineData = new ArrayCollection( [
+					{ Month: "Jan", regist: 0, undone: 0, done: 0 },
+					{ Month: "Feb", regist: 0, undone: 0, done: 0 },
+					{ Month: "Mar", regist: 0, undone: 0, done: 0 },
+					{ Month: "Apr", regist: 0, undone: 0, done: 0 },
+					{ Month: "May", regist: 0, undone: 0, done: 0 },
+					{ Month: "Jun", regist: 0, undone: 0, done: 0 },
+					{ Month: "Jul", regist: 0, undone: 0, done: 0 },
+					{ Month: "Aug", regist: 0, undone: 0, done: 0 },
+					{ Month: "Sep", regist: 0, undone: 0, done: 0 },
+					{ Month: "Oct", regist: 0, undone: 0, done: 0 },
+					{ Month: "Nov", regist: 0, undone: 0, done: 0 },
+					{ Month: "Dec", regist: 0, undone: 0, done: 0 }]);
+				
+				for(var i:int=0;i<arr.length;i++)
+				{
+					var sMonth:Number = (arr.getItemAt(i).t_begintime as Date).month;
+					var eMonth:Number = (arr.getItemAt(i).t_deadline as Date).month;
+					switch(arr.getItemAt(i).t_state)
+					{
+						case "R":
+							for(var j:int= sMonth;j<=eMonth;j++)
+							{
+								currLineData.getItemAt(j).regist++;
+							}
+							break;
+						case "U":
+							for(var j:int= sMonth;j<=eMonth;j++)
+							{
+								currLineData.getItemAt(j).undone++;
+							}
+							break;
+						case "D":
+							for(var j:int= sMonth;j<=eMonth;j++)
+							{
+								currLineData.getItemAt(j).done++;
+							}
+							break;
+					}
+					
+					
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:LineChart id="linechart1" width="100%" height="100%" dataProvider="{currLineData}"
+		fontSize="14"
+		showDataTips="true">
+		<mx:horizontalAxis>
+			<mx:CategoryAxis categoryField="Month"/>
+		</mx:horizontalAxis>
+		<mx:series>
+			<mx:LineSeries displayName="Regist" yField="regist"/>
+			<mx:LineSeries displayName="UnDone" yField="undone"/>
+			<mx:LineSeries displayName="Done" yField="done"/>
+		</mx:series>
+	</mx:LineChart>
+	<mx:Legend dataProvider="{linechart1}"/>
+</PodContentBase>

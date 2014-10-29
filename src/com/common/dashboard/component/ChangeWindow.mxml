@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+				layout="absolute" width="486" height="450"
+				showCloseButton="true">
+	<mx:Script>
+		<![CDATA[
+			import com.common.util.DateUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			private var rowDate:Object;
+			public var alterSuccess:Boolean = false;
+			
+			[Bindable]
+			private var arrDept:ArrayCollection =  new ArrayCollection([
+				{data:"1",label:"Administration Dept."},
+				{data:"2",label:"Market Dept."},
+				{data:"3",label:"HR Dept."},
+				{data:"4",label:"Sales Dept."},
+				{data:"5",label:"Development Dept."}
+			]);
+			[Bindable]
+			private var arrEMP:ArrayCollection =  new ArrayCollection([
+				{data:"1",label:"Chang"},
+				{data:"2",label:"Feng"},
+				{data:"3",label:"Ji"},
+				{data:"4",label:"Xiao"},
+				{data:"5",label:"Cai"},
+				{data:"6",label:"Song"},
+				{data:"7",label:"Cheng"}
+			]);
+			[Bindable]
+			private var arrState:ArrayCollection =  new ArrayCollection([
+				{data:"1",label:"Regist"},
+				{data:"2",label:"Undone"},
+				{data:"3",label:"Done"}
+			]);
+			
+			private function titleWindow_close(evt:CloseEvent):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function set winData(arr:Object):void
+			{
+				rowDate = arr;
+				txtTaskName.text = arr["t_name"];
+				cbbMDept.selectedIndex = arr["t_major_dept"]-1;
+				cbbMEMP.selectedIndex = arr["t_major_emp"]-1;
+				switch(arr["t_state"])
+				{
+					case "R":
+						cbbState.selectedIndex = 0;break;
+					case "U":
+						cbbState.selectedIndex = 1;break;
+					case "D":
+						cbbState.selectedIndex = 2;break;
+				}
+				completion.value = arr["t_complete"]*100;
+				assisDept.selectedIndex = arr["t_assis_dept"]-1;
+				sDate.selectedDate = arr["t_begintime"];
+				eDate.selectedDate = arr["t_deadline"];
+				desc.text = arr["t_desc"];
+			}
+
+			protected function linkbutton1_clickHandler(event:MouseEvent):void
+			{
+				if(txtTaskName.text=="") {
+					Alert.show("Task Name can't be null!");
+				}
+				else {
+					var httpService:HTTPService = new HTTPService();
+					var params:Object = new Object();
+					httpService.addEventListener(ResultEvent.RESULT, resultLnr);
+					httpService.addEventListener(FaultEvent.FAULT, faultLnr);
+					httpService.resultFormat = "e4x";
+					httpService.url = SupervisorFlex.domain + "/report/modifyTask.action";
+					params.t_id = Number(rowDate["t_id"]);
+					params.t_name = txtTaskName.text;
+					params.t_major_dept = cbbMDept.selectedIndex+1;
+					params.t_major_emp = cbbMEMP.selectedIndex+1;
+					params.t_assis_dept = assisDept.selectedIndex+1;
+					params.t_begintime = DateUtil.toString1(sDate.selectedDate);
+					params.t_deadline = DateUtil.toString1(eDate.selectedDate);
+					params.t_desc = desc.text;
+					params.t_complete = (completion.value/100).toFixed(2);
+					if(completion.value==100)
+						params.t_state = "3";
+					else if(completion.value>0&&completion.value<100&&rowDate["t_state"]=="R")
+						params.t_state = "2";
+					else if(completion.value<100&&rowDate["t_state"]=="D")
+						params.t_state = "2";
+					else 
+					{
+						switch (rowDate["t_state"])
+						{
+							case "R":
+								params.t_state = "1";
+								break;
+							case "U":
+								params.t_state = "2";
+								break;
+							case "D":
+								params.t_state = "3";
+								break;
+						}
+					}
+					httpService.send(params);
+				}
+			}
+			
+			private function resultLnr(event:ResultEvent):void
+			{
+				var externalXML:XML = new XML(event.result);
+				if(externalXML!=null)
+				{
+					if(externalXML.item[0].field1=="1")
+					{
+						Alert.show("Succeed!");
+						PopUpManager.removePopUp(this);
+						alterSuccess = true;
+					}
+					else if(externalXML.item[0].field1=="0")
+					{
+						Alert.show("Failed!");
+						alterSuccess = false;
+					}
+				}
+			}
+			
+			private function faultLnr(e:FaultEvent):void {
+				Alert.show("Error occur...");
+			}
+			
+			public function clearView():void
+			{
+				txtTaskName.text = "";
+				cbbMDept.selectedIndex = -1;
+				cbbMEMP.selectedIndex = -1;
+				cbbState.selectedIndex = -1;
+				assisDept.selectedIndex = -1;
+				sDate.selectedDate = new Date();
+				eDate.selectedDate =new Date();
+				desc.text = "";
+			}
+		]]>
+	</mx:Script>
+	<mx:Label x="10" y="10" text="Task Name:"/>
+	<mx:TextInput x="91" y="8" width="352" id="txtTaskName"/>
+	<mx:Label x="9" y="44" text="Major Department:"/>
+	<mx:ComboBox x="127" y="42" width="149" id="cbbMDept" dataProvider="{arrDept}" selectedIndex="1"/>
+	<mx:Label x="53" y="70" text="Major EMP:"/>
+	<mx:ComboBox x="127" y="68" width="149" id="cbbMEMP" dataProvider="{arrEMP}" selectedIndex="1"/>
+	<mx:Label x="10" y="128" text="Begin Time:"/>
+	<mx:Label x="244" y="128" text="End Time:" width="63"/>
+	<mx:Label x="10" y="174" text="Current State:"/>
+	<mx:ComboBox x="103" y="172" width="108" id="cbbState" enabled="false" editable="false" dataProvider="{arrState}" selectedIndex="1"/>
+	<mx:Label x="29" y="100" text="Assistant Dept:"/>
+	<mx:ComboBox id="assisDept" x="127" y="94" width="149" dataProvider="{arrDept}" selectedIndex="1" />
+	<mx:Text x="26" y="217" text="Describe:"/>
+	<mx:DateField id="sDate" x="91" y="126" width="120"/>
+	<mx:DateField id="eDate" x="315" y="126" width="120"/>
+	<mx:TextArea id="desc" x="91" y="216" width="353" height="162"/>
+	<mx:LinkButton id="commitBtn" x="193" y="382" label="Commit" click="linkbutton1_clickHandler(event)"/>
+	<mx:HSlider x="315" y="177" width="126" id="completion"
+				minimum="0" maximum="100" labels="['0%','100%']" dataTipPlacement="right" snapInterval="1"/>
+	<mx:Label x="232" y="174" text="Completion:"/>
+</mx:TitleWindow>

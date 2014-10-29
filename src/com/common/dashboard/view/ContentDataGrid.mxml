@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Displays a ColumnChart and LineChart using a ViewStack.
+ The ColumnChart and LineChart allow a user to drill-down
+ one level. For the demo, random data is generated.
+ The ColumnChart and LineChart use the same dataProvider.
+-->
+<PodContentBase
+	xmlns="com.common.dashboard.view.*"
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="100%" height="100%">
+	<!--<mx:Model id="datas" source="data/data3.xml" />-->
+	<mx:ArrayCollection id="datas"> 
+         <mx:Object> 
+            <mx:salary>1000</mx:salary> 
+            <mx:bonus>1000</mx:bonus> 
+            <mx:extra>1000</mx:extra> 
+         </mx:Object> 
+         <mx:Object> 
+            <mx:salary>800</mx:salary> 
+            <mx:bonus>1000</mx:bonus> 
+            <mx:extra>900</mx:extra> 
+         </mx:Object> 
+         <mx:Object> 
+            <mx:salary>700</mx:salary> 
+            <mx:bonus>1000</mx:bonus> 
+            <mx:extra>600</mx:extra> 
+         </mx:Object> 
+         <mx:Object> 
+            <mx:salary>2000</mx:salary> 
+            <mx:bonus>500</mx:bonus> 
+            <mx:extra>1000</mx:extra> 
+         </mx:Object> 
+      </mx:ArrayCollection> 
+
+	<!--<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			[Bindable]
+			private var DATAS:ArrayCollection;
+			
+			private function initApp():void{
+				DATAS=new ArrayCollection([{salary:"1000",bonus:"1000",extra:"1000"},
+				{salary:"800",bonus:"1000",extra:"900"},
+				{salary:"700",bonus:"1000",extra:"600"},
+				{salary:"2000",bonus:"500",extra:"1000"}]);
+			}
+		]]>
+	</mx:Script>-->
+	<mx:DataGrid width="100%" height="100%" dataProvider="{datas}">
+		<mx:columns>
+			<mx:DataGridColumn  headerText="工资" dataField="salary"/>
+			<mx:DataGridColumn  headerText="奖金" dataField="bonus"/>
+			<mx:DataGridColumn  headerText="额外" dataField="extra"/>
+			<mx:DataGridColumn headerText="操作"  resizable="false">
+				 <mx:itemRenderer>
+					 <mx:Component>
+						 <mx:Button fontSize="14" click="openEditWindow(data)" label="show" >
+							 <mx:Script>
+								 <![CDATA[
+									  
+									 import mx.controls.Alert;
+									
+									
+									 private var salary :String;
+									 private var bonus:String;
+									 private var extra:String;
+									 override public function set data(value:Object):void
+									 {
+									 super.data = value;
+									salary = value['salary'];
+									bonus = value['bonus'];
+									extra = value['extra'];
+									 }
+									 
+							 function openEditWindow(value:Object):void
+									 {
+										  
+										 
+										 // TODO Auto-generated method stub
+										 Alert.show("工资 :"+salary+"\n"+"奖金 :"+bonus+"\n"+"额外 :" + extra +"\n");
+									 }
+								 ]]>
+							 </mx:Script>
+						 </mx:Button>
+					 </mx:Component>
+				 </mx:itemRenderer>
+           </mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+</PodContentBase>

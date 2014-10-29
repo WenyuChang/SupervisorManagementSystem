@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	minWidth="600" minHeight="600" width="100%" height="100%"
+	backgroundSize="100%" backgroundColor="#222222"
+	creationComplete="onApplicationComplete()" >
+	<mx:XML id="podsData"  source="data/pods.xml"/>
+	<mx:Script>
+		<![CDATA[
+			import MyApp.Model.VO.EMP;
+			
+			import com.common.dashboard.events.*;
+			import com.common.dashboard.managers.*;
+			import com.common.dashboard.view.*;
+			import com.common.util.DateUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.Canvas;
+			import mx.controls.Alert;
+			import mx.controls.TextInput;
+			import mx.events.*;
+			import mx.rpc.events.*;
+			import mx.rpc.http.HTTPService;
+
+			private var podHash:Object = new Object();
+			private var viewXMLList:XMLList = new XMLList();
+			private var arr:ArrayCollection;
+			public var manager:PodLayoutManager;
+			private var loginEmp:EMP;
+			
+			private var arrDept:ArrayCollection =  new ArrayCollection([
+				{data:"1",label:"Administration Dept."},
+				{data:"2",label:"Market Dept."},
+				{data:"3",label:"HR Dept."},
+				{data:"4",label:"Sales Dept."},
+				{data:"5",label:"Development Dept."}
+			]);
+			
+			private var arrEMP:ArrayCollection =  new ArrayCollection([
+				{data:"1",label:"Chang"},
+				{data:"2",label:"Feng"},
+				{data:"3",label:"Ji"},
+				{data:"4",label:"Xiao"},
+				{data:"5",label:"Cai"},
+				{data:"6",label:"Song"},
+				{data:"7",label:"Cheng"}
+			]);
+			
+			public function onApplicationComplete():void
+			{
+				clearShareObjectData();
+				viewXMLList = podsData.view;
+				
+				content.horizontalScrollPolicy = "off";
+				content.verticalScrollPolicy = "off";
+				content.label = viewXMLList[0].@label;
+				content.percentWidth = 100;
+				content.percentHeight = 100;
+					
+				manager = new PodLayoutManager();
+				manager.container = content;
+				manager.id = viewXMLList[0].@id;
+				manager.addEventListener(LayoutChangeEvent.UPDATE, StateManager.setPodLayout);
+					
+				addPods(manager); 
+				
+				
+			}
+			
+			public function addPods(manager:PodLayoutManager):void
+			{
+				var podXMLList:XMLList = viewXMLList[0].pod;
+				var podLen:Number = podXMLList.length();
+				var unsavedPodCount:Number = 0;
+				for (var j:Number = 0; j < podLen; j++)
+				{
+					var podContent:PodContentBase = null;
+					var podType:String = podXMLList[j].@type;
+					var pod:Pod = new Pod();
+					switch (podType)
+					{
+						case "datagrid":
+							podContent = new ContentDataGrid1();
+							if(podContent != null)
+							{
+								pod.addChild(podContent);
+								pod.hasBtn = true;
+								pod.overdateButton.addEventListener(MouseEvent.CLICK, onOverdateBtnClick);
+								pod.last7Button.addEventListener(MouseEvent.CLICK, onLast7BtnClick);
+								pod.alltaskButton.addEventListener(MouseEvent.CLICK, onAllTaskBtnClick);
+								pod.searchText.addEventListener(Event.CHANGE, onSearchTextChange);
+							}
+							break;
+						case "chart1":
+							podContent = new ContentChart1();
+							if(podContent != null)
+								pod.addChild(podContent);
+							break;
+						case "chart2":
+							podContent = new ContentChart2();
+							if(podContent != null)
+								pod.addChild(podContent);
+							break;
+						case "chart3":
+							podContent = new ContentChart3();
+							if(podContent != null)
+								pod.addChild(podContent);
+							break;
+						default:
+							break;
+					}
+					
+					if (podContent != null)
+					{
+						var viewId:String = manager.id;
+						var podId:String = podXMLList[j].@id;
+						
+						podContent.properties = podXMLList[j];
+						pod.id = podId;
+						pod.title = podXMLList[j].@title;
+						var index:Number;
+						
+						if (StateManager.getMinimizedPodIndex(viewId, podId)!=-1)
+						{
+							index = StateManager.getMinimizedPodIndex(viewId, podId);
+							manager.addMinimizedItemAt(pod, index);
+						}
+						else
+						{
+							index = StateManager.getPodIndex(viewId, podId);
+							
+							if (index == -1)
+							{
+								index = podLen + unsavedPodCount;
+								unsavedPodCount += 1;
+							}
+							
+							manager.addItemAt(pod, index, StateManager.isPodMaximized(viewId, podId));
+						}
+						
+						podHash[pod] = manager;
+					}
+				}
+				
+				pod.addEventListener(FlexEvent.UPDATE_COMPLETE, onCreationCompletePod);
+			}
+			
+			private function onCreationCompletePod(e:FlexEvent):void
+			{
+				e.currentTarget.removeEventListener(FlexEvent.UPDATE_COMPLETE, onCreationCompletePod);
+				var manager:PodLayoutManager = PodLayoutManager(podHash[e.currentTarget]);
+				manager.removeNullItems();
+				manager.updateLayout(false);
+			}
+			
+			private function clearShareObjectData():void
+			{
+				StateManager.sharedObject.clear();
+			}
+			
+			private function setView():void
+			{
+				var len:Number = this.manager.items.length;
+				var content:ContentDataGrid1 = (this.manager.items[0] as Pod).getChildAt(0) as ContentDataGrid1;
+				switch (loginEmp.getE_duty())
+				{
+					case 'Admin':
+					case 'MannagerAssistant':
+					case 'Director':
+					{
+						content.grid.btnColumn.visible = true;
+						break;
+					}
+					case 'DepartmentManager':
+					{
+						content.grid.btnColumn.visible = false;
+						break;
+					}
+					default:
+						break;
+				}
+			}
+			
+			public function getData(emp:EMP):void
+			{
+				loginEmp = emp;
+				setView();
+				var httpService:HTTPService = new HTTPService();
+				var params:Object = new Object();
+				httpService.addEventListener(ResultEvent.RESULT, resultLnr);
+				httpService.addEventListener(FaultEvent.FAULT, faultLnr);
+				httpService.resultFormat = "e4x";
+				
+				switch (emp.getE_duty())
+				{
+					case 'Admin':
+					case 'MannagerAssistant':
+					{
+						httpService.url = SupervisorFlex.domain + "/report/showAllTask.action";
+						httpService.send();
+						break;
+					}
+					case 'Director':
+					{
+						params.di_no = emp.getE_no();
+						httpService.url = SupervisorFlex.domain + "/report/showDITask.action";
+						httpService.send(params);
+						break;
+					}
+					case 'DepartmentManager':
+					{
+						params.dm_no = emp.getE_no();
+						httpService.url = SupervisorFlex.domain + "/report/showDMTask.action";
+						httpService.send(params);
+						break;
+					}
+					default:
+						break;
+				}
+			}
+			
+			private function resultLnr(event:ResultEvent):void
+			{
+				var externalXML:XML = new XML(event.result);
+				if (externalXML != null)
+				{
+					var loopCount:int = externalXML.item.length();
+					arr = new ArrayCollection();
+					
+					for(var i:int = 0; i < loopCount; i++)
+					{
+						var majorDept:Number = Number(externalXML.item[i].field3);
+						var majorEmp:Number = Number(externalXML.item[i].field4);
+						var assisDept:Number = Number(externalXML.item[i].field5);
+						var bDate:Date = DateUtil.StrToDate(externalXML.item[i].field6);
+						var eDate:Date = DateUtil.StrToDate(externalXML.item[i].field7)
+						var complete:Number = Number(externalXML.item[i].field9);
+						var state:String;
+						var stateStr:String;
+						var allDataInStr:String = "";
+						switch (Number(externalXML.item[i].field10))
+						{
+							case 1:
+								state = "R";
+								stateStr = "Rigster";
+								break;
+							case 2:
+								state = "U";
+								stateStr = "Doing";
+								break;
+							case 3:
+								state = "D";
+								stateStr = "Done";
+								break;
+						}
+						allDataInStr = externalXML.item[i].field1
+							+ " " + externalXML.item[i].field2
+							+ " " + DateUtil.toString1(bDate)
+							+ " " + DateUtil.toString1(eDate)
+							+ " " + externalXML.item[i].field8
+							+ " " + arrDept[majorDept-1].label
+							+ " " + arrEMP[majorEmp-1].label
+							+ " " + arrDept[assisDept-1].label
+							+ " " + stateStr;
+						
+						arr.addItem({t_id:externalXML.item[i].field1,
+							t_name:externalXML.item[i].field2,
+							t_major_dept:majorDept,
+							t_major_emp:majorEmp,
+							t_assis_dept:assisDept,
+							t_begintime:bDate,
+							t_deadline:eDate,
+							t_desc:externalXML.item[i].field8,
+							t_complete:complete,
+							t_state:state,
+							t_allData:allDataInStr
+						});
+					}
+					
+					setPodsData(arr);
+				}
+			}
+			
+			private function setPodsData(arr:ArrayCollection):void
+			{
+				var len:Number = this.manager.items.length;
+				for(var i:int=0;i<len;i++)
+				{
+					var content:PodContentBase = (this.manager.items[i] as Pod).getChildAt(0) as PodContentBase;
+					content.arrData = arr;
+				}
+			}
+			
+			private function faultLnr(e:FaultEvent):void {
+				Alert.show("Can't load the data! Please check the network or the configuration!");	
+			}
+			
+			private function onOverdateBtnClick(event:MouseEvent):void
+			{
+				var httpService:HTTPService = new HTTPService();
+				var params:Object = new Object();
+				httpService.addEventListener(ResultEvent.RESULT, resultLnr);
+				httpService.addEventListener(FaultEvent.FAULT, faultLnr);
+				httpService.resultFormat = "e4x";
+				
+				switch (loginEmp.getE_duty())
+				{
+					case 'Admin':
+					case 'MannagerAssistant':
+					{
+						httpService.url = SupervisorFlex.domain + "/report/showOverdateTask.action";
+						httpService.send();
+						break;
+					}
+					case 'Director':
+					{
+						params.di_no = loginEmp.getE_no();
+						httpService.url = SupervisorFlex.domain + "/report/showDIOverdateTask.action";
+						httpService.send(params);
+						break;
+					}
+					case 'DepartmentManager':
+					{
+						params.dm_no = loginEmp.getE_no();
+						httpService.url = SupervisorFlex.domain + "/report/showDMOverdateTask.action";
+						httpService.send(params);
+						break;
+					}
+					default:
+						break;
+				}
+			}
+			
+			private function onLast7BtnClick(event:MouseEvent):void
+			{
+				var httpService:HTTPService = new HTTPService();
+				var params:Object = new Object();
+				httpService.addEventListener(ResultEvent.RESULT, resultLnr);
+				httpService.addEventListener(FaultEvent.FAULT, faultLnr);
+				httpService.resultFormat = "e4x";
+				
+				switch (loginEmp.getE_duty())
+				{
+					case 'Admin':
+					case 'MannagerAssistant':
+					{
+						httpService.url = SupervisorFlex.domain + "/report/showIn7DaysTask.action";
+						httpService.send();
+						break;
+					}
+					case 'Director':
+					{
+						params.di_no = loginEmp.getE_no();
+						httpService.url = SupervisorFlex.domain + "/report/showDIIn7DaysTask.action";
+						httpService.send(params);
+						break;
+					}
+					case 'DepartmentManager':
+					{
+						params.dm_no = loginEmp.getE_no();
+						httpService.url = SupervisorFlex.domain + "/report/showDMIn7DaysTask.action";
+						httpService.send(params);
+						break;
+					}
+					default:
+						break;
+				}
+			}
+			
+			private function onAllTaskBtnClick(event:MouseEvent):void
+			{
+				getData(loginEmp);
+			}
+			
+			private function onSearchTextChange(event:Event):void
+			{
+				var content:ContentDataGrid1 = (this.manager.items[0] as Pod).getChildAt(0) as ContentDataGrid1;
+				content.currDataList.removeAll();
+				var inputStr:String = (event.currentTarget as TextInput).text;
+				var input:Array = inputStr.split(" ");
+				for(var i:int=0;i<content.allDataList.length;i++)
+				{
+					var flag:Boolean = true;
+					for(var j=0;j<input.length; j++)
+					{
+						if(input[j]!="" && String(content.allDataList.getItemAt(i).t_allData).toLowerCase().search(input[j].toLowerCase())==-1)
+						{
+							flag = false;
+							break;
+						}
+					}
+					if(flag)
+					{
+						content.currDataList.addItem(content.allDataList.getItemAt(i));
+					}
+				}
+			}
+		]]>
+	</mx:Script>
+		
+	<mx:Canvas id="content" width="100%" height="100%" />
+</mx:Canvas>
