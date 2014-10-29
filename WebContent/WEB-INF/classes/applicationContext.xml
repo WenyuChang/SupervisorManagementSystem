@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="GB2312"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+	default-autowire="byName">
+
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName"
+			value="oracle.jdbc.driver.OracleDriver" />
+		<!-- property name="url" value="jdbc:oracle:thin:@222.204.215.123:1521:orcl" /> -->
+		<property name="url" value="jdbc:oracle:thin:@127.0.0.1:1521:orcl" />
+		<property name="username" value="duban" />
+		<property name="password" value="duban" />
+	</bean>
+
+	<bean id="jdbcTemplate"
+		class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="reportImpl"
+		class="com.report.dao.impl.ReportDaoImpl">
+		<property name="jdbcTemplate" ref="jdbcTemplate" />
+	</bean>
+
+	<bean id="allDepartment"
+		class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="query">
+			<value>
+				<![CDATA[
+				select * from department		
+    			  ]]>
+			</value>
+		</property>
+	</bean>
+
+	<bean id="allEMP" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="query">
+			<value>
+				<![CDATA[
+				select * from EMP			
+    			  ]]>
+			</value>
+		</property>
+	</bean>
+
+	<bean id="allTask"
+		class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="query">
+			<value>
+				<![CDATA[
+				select * from task			
+    			  ]]>
+			</value>
+		</property>
+	</bean>
+
+	<!-- 
+		CREATE OR REPLACE PROCEDURE procTest
+		(
+		data_curor out sys_refcursor
+		)
+		is
+		v_subsql varchar2(200);
+		BEGIN
+		v_subsql := 'select * from department where d_no = 1';
+		open data_curor for v_subsql;
+		END procTest;
+		//存储过程仅最后一个参数是out属性，且是游标类型。除了那个游标，别的需在下面的parameters中列出。
+	-->
+	<bean id="test" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call procTest(?)	
+    			  ]]>
+			</value>
+		</property>
+	</bean>
+
+	<!-- 
+		CREATE OR REPLACE PROCEDURE procTest2
+		(
+		dep_no in department.d_no%type,
+		data_curor out sys_refcursor
+		)
+		is
+		v_subsql varchar2(200);
+		BEGIN
+		v_subsql := 'select * from department where d_no = '||dep_no||'';
+		open data_curor for v_subsql;
+		END procTest2;
+		//存储过程仅最后一个参数是out属性，且是游标类型。除了那个游标，别的需在下面的parameters中列出。
+	-->
+	<bean id="test2" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call procTest2(?,?)	
+    			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>dep_no</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="login" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call procLogin(?,?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>e_name</value>				
+				<value>e_passwd</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showAllTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_all_task(?)	
+	   			  ]]>
+			</value>
+		</property>
+	</bean>
+	
+	<bean id="showTaskByRes" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_task_by_res(?,?,?,?,?,?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>t_name</value>				
+				<value>t_major_dept</value>		
+				<value>t_major_emp</value>		
+				<value>t_begintime</value>		
+				<value>t_deadline</value>		
+				<value>t_state</value>	
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showIn7DaysTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_in_7_days_task(?)	
+	   			  ]]>
+			</value>
+		</property>
+	</bean>
+	
+	<bean id="showOverdateTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_overdate_task(?)	
+	   			  ]]>
+			</value>
+		</property>
+	</bean>
+	
+	<bean id="deleTaskByID" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="update">
+			<value>
+				<![CDATA[
+				delete from task where t_id = ?
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>t_id</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="addTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="update">
+			<value>
+				<![CDATA[
+				insert into task(t_name,t_major_dept,t_major_emp,t_assis_dept,t_begintime,
+					t_deadline,t_desc,t_complete,t_operator,t_state,t_lmtime)
+					values (?,?,?,?,to_date(?,'yyyy-mm-dd'),
+					to_date(?,'yyyy-mm-dd'),?,?,?,?,sysdate)
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>t_name</value>
+				<value>t_major_dept</value>
+				<value>t_major_emp</value>
+				<value>t_assis_dept</value>
+				<value>t_begintime</value>
+				<value>t_deadline</value>
+				<value>t_desc</value>
+				<value>t_complete</value>
+				<value>t_operator</value>
+				<value>t_state</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="modifyTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="update">
+			<value>
+				<![CDATA[
+				update task set t_name=?,t_major_dept=?,t_major_emp=?,t_assis_dept=?,t_begintime=to_date(?,'yyyy-mm-dd'),
+					t_deadline=to_date(?,'yyyy-mm-dd'),t_desc=?,t_complete=?,t_operator=?,t_state=?,t_lmtime=sysdate
+					where t_id = ?
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>t_name</value>
+				<value>t_major_dept</value>
+				<value>t_major_emp</value>
+				<value>t_assis_dept</value>
+				<value>t_begintime</value>
+				<value>t_deadline</value>
+				<value>t_desc</value>
+				<value>t_complete</value>
+				<value>t_operator</value>
+				<value>t_state</value>				
+				<value>t_id</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDITask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_di_task(?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>di_no</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDITaskByRes" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_di_task_by_res(?,?,?,?,?,?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>t_name</value>				
+				<value>t_major_dept</value>		
+				<value>t_major_emp</value>		
+				<value>t_begintime</value>		
+				<value>t_deadline</value>		
+				<value>t_state</value>	
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDIIn7DaysTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_di_in_7_days_task(?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>			
+				<value>di_no</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDIOverdateTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_di_overdate_task(?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>			
+				<value>di_no</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDMTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_dm_task(?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>dm_no</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDMTaskByRes" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_dm_task_by_res(?,?,?,?,?,?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>
+				<value>t_name</value>				
+				<value>t_major_dept</value>		
+				<value>t_major_emp</value>		
+				<value>t_begintime</value>		
+				<value>t_deadline</value>		
+				<value>t_state</value>	
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDMIn7DaysTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_dm_in_7_days_task(?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>			
+				<value>dm_no</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="showDMOverdateTask" class="com.report.action.ReportAction"
+		scope="prototype">
+		<property name="report" ref="reportImpl" />
+		<property name="procedure">
+			<value>
+				<![CDATA[
+				call query_dm_overdate_task(?,?)	
+	   			  ]]>
+			</value>
+		</property>
+		<property name="parameters">
+			<list>			
+				<value>dm_no</value>
+			</list>
+		</property>
+	</bean>
+
+</beans>

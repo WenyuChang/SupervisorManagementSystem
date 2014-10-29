@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="GB2312" ?>
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+        "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+	<package name="report" namespace="/report" extends="struts-default">
+		<interceptors>
+			<interceptor name="loginInterception" class="com.report.intercept.LoginIntercept"/>
+		</interceptors>
+	
+		<!--Start of Test Common Action -->
+		<action name="showDepartment" class="allDepartment" method="Query">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<action name="showEMP" class="allEMP" method="Query">
+			<result>/report/result.jsp</result>
+		</action>
+
+		<action name="showTask" class="allTask" method="Query">
+			<result>/report/result.jsp</result>
+		</action>
+		<!--End of Test Common Action -->
+		
+		<action name="LoginTest" class="loginTest" method="doProcTest">
+			<interceptor-ref name="defaultStack" />
+        	<interceptor-ref name="loginInterception" />
+			<result>/report/result.jsp</result>
+			<result name="ERROR">/report/error.jsp</result>
+			<result name="Admin">/reportMenu/menuMA.jsp</result>
+			<result name="MannagerAssistant">/reportMenu/menuFailed.jsp</result>
+			<result name="Director">/reportMenu/menuFailed.jsp</result>
+			<result name="DepartmentManager">/reportMenu/menuFailed.jsp</result>
+		</action>
+		
+		<action name="Login" class="login" method="doProc">
+			<interceptor-ref name="defaultStack" />
+        	<interceptor-ref name="loginInterception" />
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<!-- Manager Assistant action -->
+		<action name="showAllTask" class="showAllTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+<!--		<action name="showTaskByRes" class="showTaskByRes" method="doProc">-->
+<!--			<result>/report/result.jsp</result>-->
+<!--		</action>-->
+		
+		<action name="showIn7DaysTask" class="showIn7DaysTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<action name="showOverdateTask" class="showOverdateTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+<!--		<action name="deleTaskByID" class="deleTaskByID" method="Update">-->
+<!--			<result>/report/result.jsp</result>-->
+<!--		</action>-->
+		
+		<action name="addTask" class="addTask" method="Update">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<action name="modifyTask" class="modifyTask" method="Update">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<!-- Director action -->
+		<action name="showDITask" class="showDITask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+<!--		<action name="showDITaskByRes" class="showDITaskByRes" method="doProc">-->
+<!--			<result>/report/result.jsp</result>-->
+<!--		</action>-->
+		
+		<action name="showDIIn7DaysTask" class="showDIIn7DaysTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<action name="showDIOverdateTask" class="showDIOverdateTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<!-- Department Manager action -->
+		<action name="showDMTask" class="showDMTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+<!--		<action name="showDMTaskByRes" class="showDMTaskByRes" method="doProc">-->
+<!--			<result>/report/result.jsp</result>-->
+<!--		</action>-->
+		
+		<action name="showDMIn7DaysTask" class="showDMIn7DaysTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+		<action name="showDMOverdateTask" class="showDMOverdateTask" method="doProc">
+			<result>/report/result.jsp</result>
+		</action>
+		
+	</package>
+</struts>
